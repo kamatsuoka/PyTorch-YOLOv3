@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 
 
 def pad_to_square(img, pad_value):
-    c, h, w = img.shape
+    _, h, w = img.shape
     dim_diff = np.abs(h - w)
     # (upper / left) padding and (lower / right) padding
     pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
@@ -57,7 +57,8 @@ class ImageFolder(Dataset):
 
 
 class ListDataset(Dataset):
-    def __init__(self, list_path, img_size=416, augment=True, multiscale=True, normalized_labels=True):
+    def __init__(self, list_path, img_size=416, augment=True, multiscale=True, normalized_labels=True,
+                 grayscale=False):
         with open(list_path, "r") as file:
             self.img_files = file.readlines()
 
@@ -73,6 +74,7 @@ class ListDataset(Dataset):
         self.min_size = self.img_size - 3 * 32
         self.max_size = self.img_size + 3 * 32
         self.batch_count = 0
+        self.grayscale = grayscale
 
     def __getitem__(self, index):
 
@@ -83,10 +85,16 @@ class ListDataset(Dataset):
         img_path = self.img_files[index % len(self.img_files)].rstrip()
 
         # Extract image as PyTorch tensor
-        img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
+        image: Image = Image.open(img_path)
+        if self.grayscale:
+            image = image.convert('L')
+        else:
+            image = image.convert('RGB')
+
+        img = transforms.ToTensor()(image)
 
         # Handle images with less than three channels
-        if len(img.shape) != 3:
+        if len(img.shape) != 3 and not self.grayscale:
             img = img.unsqueeze(0)
             img = img.expand((3, img.shape[1:]))
 

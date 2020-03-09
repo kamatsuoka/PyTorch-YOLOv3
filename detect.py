@@ -103,7 +103,6 @@ if __name__ == "__main__":
         plt.figure()
         fig, ax = plt.subplots(1)
         ax.imshow(img)
-        # plt.savefig(f"test.png", dpi=200)  # TODO
 
         # Draw bounding boxes and labels of detections
         if detections is not None:

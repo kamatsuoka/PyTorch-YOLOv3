@@ -48,7 +48,7 @@ if __name__ == "__main__":
         model.load_darknet_weights(opt.weights_path)
     else:
         # Load checkpoint weights
-        model.load_state_dict(torch.load(opt.weights_path))
+        model.load_state_dict(torch.load(opt.weights_path, map_location=device))
 
     model.eval()  # Set in evaluation mode
 
@@ -99,9 +99,11 @@ if __name__ == "__main__":
 
         # Create plot
         img = np.array(Image.open(path))
+        print(f'img.shape = {img.shape}')
         plt.figure()
         fig, ax = plt.subplots(1)
         ax.imshow(img)
+        # plt.savefig(f"test.png", dpi=200)  # TODO
 
         # Draw bounding boxes and labels of detections
         if detections is not None:
@@ -112,24 +114,29 @@ if __name__ == "__main__":
             bbox_colors = random.sample(colors, n_cls_preds)
             for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
 
-                print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
+                if cls_conf.item() <= opt.conf_thres:
+                    continue
+
+                print(f"\t+ Label: {classes[int(cls_pred)]}, Conf: {cls_conf.item():.5f}, "
+                      f"Box: ({int(x1)}, {int(y1)}) - ({int(x2)}, {int(y2)})")
 
                 box_w = x2 - x1
                 box_h = y2 - y1
 
                 color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                 # Create a Rectangle patch
-                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none")
+                bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=1, edgecolor=color, facecolor="none")
                 # Add the bbox to the plot
                 ax.add_patch(bbox)
                 # Add label
                 plt.text(
                     x1,
-                    y1,
+                    y1 - 40,
                     s=classes[int(cls_pred)],
                     color="white",
                     verticalalignment="top",
                     bbox={"color": color, "pad": 0},
+                    fontsize=2
                 )
 
         # Save generated image with detections
@@ -137,5 +144,5 @@ if __name__ == "__main__":
         plt.gca().xaxis.set_major_locator(NullLocator())
         plt.gca().yaxis.set_major_locator(NullLocator())
         filename = path.split("/")[-1].split(".")[0]
-        plt.savefig(f"output/{filename}.png", bbox_inches="tight", pad_inches=0.0)
+        plt.savefig(f"output/{filename}.png", bbox_inches="tight", pad_inches=0.0, dpi=300)
         plt.close()

@@ -65,7 +65,7 @@ if __name__ == "__main__":
             model.load_darknet_weights(opt.pretrained_weights)
 
     # Get dataloader
-    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training, 
+    dataset = ListDataset(train_path, augment=True, multiscale=opt.multiscale_training,
                           grayscale=opt.grayscale)
     dataloader = torch.utils.data.DataLoader(
         dataset,
@@ -160,6 +160,7 @@ if __name__ == "__main__":
                 nms_thres=0.5,
                 img_size=opt.img_size,
                 batch_size=8,
+                grayscale=opt.grayscale
             )
             evaluation_metrics = [
                 ("val_precision", precision.mean()),

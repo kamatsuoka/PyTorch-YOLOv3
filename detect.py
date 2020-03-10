@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_cpu", type=int, default=0, help="number of cpu threads to use during batch generation")
     parser.add_argument("--img_size", type=int, default=416, help="size of each image dimension")
     parser.add_argument("--checkpoint_model", type=str, help="path to checkpoint model")
+    parser.add_argument("--grayscale", action='store_true', help="train on grayscale images")
     opt = parser.parse_args()
     print(opt)
 
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     model.eval()  # Set in evaluation mode
 
     dataloader = DataLoader(
-        ImageFolder(opt.image_folder, img_size=opt.img_size),
+        ImageFolder(opt.image_folder, img_size=opt.img_size, grayscale=opt.grayscale),
         batch_size=opt.batch_size,
         shuffle=False,
         num_workers=opt.n_cpu,
@@ -70,7 +71,8 @@ if __name__ == "__main__":
     prev_time = time.time()
     for batch_i, (img_paths, input_imgs) in enumerate(dataloader):
         # Configure input
-        input_imgs = Variable(input_imgs.type(Tensor))
+        img = input_imgs.type(Tensor)
+        input_imgs = Variable(img)
 
         # Get detections
         with torch.no_grad():

@@ -37,14 +37,16 @@ def random_resize(images, min_size=288, max_size=448):
 
 
 class ImageFolder(Dataset):
-    def __init__(self, folder_path, img_size=416):
+    def __init__(self, folder_path, img_size=416, grayscale=False):
         self.files = sorted(glob.glob("%s/*.*" % folder_path))
         self.img_size = img_size
+        self.grayscale = grayscale
 
     def __getitem__(self, index):
         img_path = self.files[index % len(self.files)]
         # Extract image as PyTorch tensor
-        img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
+        mode: str = 'L' if self.grayscale else 'RGB'
+        img = transforms.ToTensor()(Image.open(img_path).convert(mode))
         # Pad to square resolution
         img, _ = pad_to_square(img, 0)
         # Resize
@@ -85,13 +87,8 @@ class ListDataset(Dataset):
         img_path = self.img_files[index % len(self.img_files)].rstrip()
 
         # Extract image as PyTorch tensor
-        image: Image = Image.open(img_path)
-        if self.grayscale:
-            image = image.convert('L')
-        else:
-            image = image.convert('RGB')
-
-        img = transforms.ToTensor()(image)
+        mode: str = 'L' if self.grayscale else 'RGB'
+        img = transforms.ToTensor()(Image.open(img_path).convert(mode))
 
         # Handle images with less than three channels
         if len(img.shape) != 3 and not self.grayscale:
